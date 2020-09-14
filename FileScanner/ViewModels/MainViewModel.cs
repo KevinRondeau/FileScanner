@@ -84,16 +84,17 @@ namespace FileScanner.ViewModels
 
         private async void ScanFolder(string dir)
         {
+           
             MyFiles.Clear();
             try
             {
-               FolderItems = new ObservableCollection<string>(GetFolders(dir));
+               await Task.Run(()=>FolderItems=new ObservableCollection<string> (GetFolders(dir)));
             }
             catch (Exception E) { };
-            await Task.Run(() => GetDirs(dir));
+               await Task.Run(() => GetDirs(dir));
             try
             {
-               FolderFiles = new ObservableCollection<string>(GetFolderFiles(dir));
+              await Task.Run(()=> FolderFiles = new ObservableCollection<string>(GetFolderFiles(dir)));
             }
             catch (Exception E) { };
             await Task.Run(()=> GetFiles(dir));
@@ -105,19 +106,19 @@ namespace FileScanner.ViewModels
            
         }
 
-        IEnumerable<string> GetFolders(string dir)
+         IEnumerable<string> GetFolders(string dir)
         {
-            foreach (var d in Directory.EnumerateDirectories(dir, "*",SearchOption.AllDirectories))
+            foreach( var d in Directory.EnumerateDirectories(dir, "*",SearchOption.AllDirectories))
             {
                 FolderItems.Add(d);
-                yield return d;
+                yield  return d;
             }
         }
         IEnumerable<string> GetFolderFiles(string dir)
         {
             foreach (var d in Directory.EnumerateFiles(dir, "*",SearchOption.AllDirectories))
             {
-                FolderFiles.Add(d);
+               FolderFiles.Add(d);
                 yield return d;
             }
         }
