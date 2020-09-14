@@ -14,8 +14,10 @@ namespace FileScanner.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
+
         private string selectedFolder;
         private ObservableCollection<string> folderItems = new ObservableCollection<string>();
+        private ObservableCollection<string> folderFiles = new ObservableCollection<string>();
         private ObservableCollection<Files> myFiles=new ObservableCollection<Files>();
         public DelegateCommand<string> OpenFolderCommand { get; private set; }
         public DelegateCommand<string> ScanFolderCommand { get; private set; }
@@ -25,6 +27,15 @@ namespace FileScanner.ViewModels
             set 
             { 
                 folderItems = value;
+                OnPropertyChanged();
+            }
+        }
+        public ObservableCollection<string> FolderFiles
+        {
+            get => folderFiles;
+            set
+            {
+                folderFiles = value;
                 OnPropertyChanged();
             }
         }
@@ -52,6 +63,7 @@ namespace FileScanner.ViewModels
         {
             OpenFolderCommand = new DelegateCommand<string>(OpenFolder);
             ScanFolderCommand = new DelegateCommand<string>(ScanFolder, CanExecuteScanFolder);
+
         }
 
         private bool CanExecuteScanFolder(string obj)
@@ -70,30 +82,64 @@ namespace FileScanner.ViewModels
             }
         }
 
-        private void ScanFolder(string dir)
+        private async void ScanFolder(string dir)
         {
             MyFiles.Clear();
-            FolderItems = new ObservableCollection<string>(GetDirs(dir));
-            
-            
-            foreach (var item in Directory.EnumerateFiles(dir, "*"))
+            try
             {
-                FolderItems.Add(item);
-                MyFiles.Add(new Files(item));
-
+               FolderItems = new ObservableCollection<string>(GetFolders(dir));
             }
+            catch (Exception E) { };
+            await Task.Run(() => GetDirs(dir));
+            try
+            {
+               FolderFiles = new ObservableCollection<string>(GetFolderFiles(dir));
+            }
+            catch (Exception E) { };
+            await Task.Run(()=> GetFiles(dir));
+  
+
+          
+              
+        
            
         }
 
-        IEnumerable<string> GetDirs(string dir)
+        IEnumerable<string> GetFolders(string dir)
         {
-     
-
-            foreach (var d in Directory.EnumerateDirectories(dir, "*"))
+            foreach (var d in Directory.EnumerateDirectories(dir, "*",SearchOption.AllDirectories))
             {
-                MyFiles.Add(new Files(d));
+                FolderItems.Add(d);
                 yield return d;
             }
+        }
+        IEnumerable<string> GetFolderFiles(string dir)
+        {
+            foreach (var d in Directory.EnumerateFiles(dir, "*",SearchOption.AllDirectories))
+            {
+                FolderFiles.Add(d);
+                yield return d;
+            }
+        }
+        private async void GetFiles(string dir)
+        {
+            foreach (var item in FolderFiles)
+            {
+             
+                    await Task.Run(() => System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => this.MyFiles.Add(new Files(item)))));
+                
+            }
+
+        }
+
+        private async void GetDirs(string dir)
+        {
+            foreach (var d in FolderItems)
+            {
+
+                await Task.Run(() => System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => this.MyFiles.Add(new Files(d)))));
+            }
+
         }
 
         ///TODO : Tester avec un dossier avec beaucoup de fichier

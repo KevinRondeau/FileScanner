@@ -13,5 +13,6 @@ namespace FileScanner
     /// </summary>
     public partial class App : Application
     {
+
     }
 }
